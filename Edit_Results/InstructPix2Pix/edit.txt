@@ -1,0 +1,8 @@
+with bangs：2.png
+with curly hair：3.png
+with red lipstick：4.png
+make it happy：5.png
+make it plump：6.png
+with straight long hair：8.png
+with beard：10.png
+with receding hairline：18.png
