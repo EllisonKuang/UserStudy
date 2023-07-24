@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <META HTTP-EQUIV="Cache-Control" CONTENT="no-cache, must-revalidate">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script src="./papaparse.min.js"></script>
+    <title>编辑部分评测</title>
+    <style type="text/css">
+        body{
+            background-color: white;
+        }
+        .button {
+            width: 90px;
+            height: 40px;
+            border-radius: 2px;
+            border: 0px solid #ccc;
+            font-size: 20px;
+            color: white;
+            background-color: black;
+        }
+        .button_score {
+            width: 90px;
+            height: 40px;
+            border-radius: 2px;
+            border: 0px solid #ccc;
+            font-size: 20px;
+            color: white;
+            background-color: gray;
+        }
+        .button_score_select {
+            width: 90px;
+            height: 40px;
+            border-radius: 2px;
+            border: 0px solid #ccc;
+            font-size: 20px;
+            color: white;
+            background-color: red;
+        }
+        table {
+            font-size: 20px;
+        }
+    </style>
+</head>
+
+<body>
+<div align="Center" style="padding-bottom:30px; padding-top: 30px;">
+    <p style="color:red"> 手机端有BUG！请使用Chrome浏览器。请您在测试前先阅读Readme文件了解测试规则及‘语义匹配度’和‘图片解耦度’指标的详细描述 </p>
+    <p1 style="font-size:30px"> 123 </p1>
+    <p id="title"> 请点击你认为下列图片中与上述编辑文本<font size="5"><b id="metric">“语义匹配度”最优</b></font>的<b>两个</b>编辑结果。 </p>
+    <br>
+    <table id="table2">
+        <tr>
+            <td style="text-align:center" id="label0"> 原始图片  </td>
+            <td style="text-align:center" id="label1"> 编辑结果1 </td>
+            <td style="text-align:center" id="label2"> 编辑结果2 </td>
+            <td style="text-align:center" id="label3"> 编辑结果3 </td>
+            <td style="text-align:center" id="label4"> 编辑结果4 </td>
+            <td style="text-align:center" id="label5"> 编辑结果5 </td>
+        </tr>
+        <tr>
+            <td> <img id="img0" height=270 style="border:5px solid white"> </td>
+            <td> <img id="img1" height=270 onclick="next('1')" style="border:5px solid white"> </td>
+            <td> <img id="img2" height=270 onclick="next('2')" style="border:5px solid white"> </td>
+            <td> <img id="img3" height=270 onclick="next('3')" style="border:5px solid white"> </td>
+            <td> <img id="img4" height=270 onclick="next('4')" style="border:5px solid white"> </td>
+            <td> <img id="img5" height=270 onclick="next('5')" style="border:5px solid white"> </td>
+        </tr>
+        <tr height=10>
+        </tr>
+    </table>
+
+    <p id="title2"> 请点击你认为下列图片中与对应文本<font size="5"><b id="metric2">“图片解耦度”最优</b></font>的<b>两个</b>编辑结果。 </p>
+    <br>
+    <table id="table3">
+        <tr>
+            <td style="text-align:center" id="label00"> 原始图片 </td>
+            <td style="text-align:center" id="label6"> 编辑结果1 </td>
+            <td style="text-align:center" id="label7"> 编辑结果2 </td>
+            <td style="text-align:center" id="label8"> 编辑结果3 </td>
+            <td style="text-align:center" id="label9"> 编辑结果4 </td>
+            <td style="text-align:center" id="label10"> 编辑结果5 </td>
+        </tr>
+        <tr>
+            <td> <img id="img00" height=270 style="border:5px solid white"> </td>
+            <td> <img id="img6" height=270 onclick="next('6')" style="border:5px solid white"> </td>
+            <td> <img id="img7" height=270 onclick="next('7')" style="border:5px solid white"> </td>
+            <td> <img id="img8" height=270 onclick="next('8')" style="border:5px solid white"> </td>
+            <td> <img id="img9" height=270 onclick="next('9')" style="border:5px solid white"> </td>
+            <td> <img id="img10" height=270 onclick="next('10')" style="border:5px solid white"> </td>
+        </tr>
+        <tr height=10>
+        </tr>
+    </table>
+    <br>
+    <p id="bottom">当前是 <a id=cur_grp> </a> / <a id=tol_grp> </a> 组</p>
+    <!-- <input type="button" value="下一个" class="button" onClick="next()"> -->
+    <br>
+</div>
+</body>
+</html>
+
+
+<script type="text/javascript">
+    // 可以调整的参数
+    var group_num = 8*6;
+    var methods_num = 5;
+
+    // 全局变量
+    var fidelity_score_record = new Array(methods_num);
+    var aesthetics_score_record = new Array(methods_num);
+    var clicked = new Array(2*methods_num);
+    for(var i = 0; i < methods_num; i++){
+        fidelity_score_record[i] = 0;
+        aesthetics_score_record[i] = 0;
+        clicked[i] = 0;
+        clicked[i+methods_num] = 0;
+    }
+
+    var cur_group_num = 1;
+    var flag = 1;
+    var num_selected = 0;
+
+    var methods = ['Ours','InstructPix2Pix','StyleCLIP','TediGAN-b','DeltaEdit'];
+    var ids = ['2.png', '3.png', '4.png', '5.png', '6.png', '8.png', '10.png','18.png'];
+    var texts = ['a normal human face with bangs', 'a normal human face with curly hair', 'a normal human face with red lipstick', 'a happy human face', 'a plump human face', 'a normal human face with straight long hair', 'a normal human face with beard','a normal human face with receding hairline'];
+    text = document.getElementById("tol_grp");
+    text.innerHTML = group_num;
+
+    Array.prototype.shuffle = function() {
+        var input = this;
+
+        for (var i = input.length-1; i >=0; i--) {
+            var randomIndex = Math.floor(Math.random()*(i+1));
+            var itemAtIndex = input[randomIndex];
+            input[randomIndex] = input[i];
+            input[i] = itemAtIndex;
+        }
+        return input;
+    }
+
+    var num_seq = [0,1,2,3,4];
+    var random_seq = [0,1,2,3,4];
+
+    // 加载函数
+    function random_setup(){
+        random_seq = num_seq.shuffle();
+        //random_seq = num_seq;
+        for(var i=0;i<random_seq.length;++i){
+            var img_path = 'Edit_Results/' + methods[random_seq[i]] + '/'+parseInt((cur_group_num-1)/8+1)+'/' + ids[(cur_group_num-1)%8];
+            var img_elem = document.getElementById('img'+(i+1).toString());
+            img_elem.setAttribute('src', img_path);
+            img_elem.setAttribute('style', "border:5px solid white");
+
+            var img_elem = document.getElementById('img'+(i+1+methods_num).toString());
+            img_elem.setAttribute('src', img_path);
+            img_elem.setAttribute('style', "border:5px solid white");
+        }
+        var img_path = 'Edit_Results/Ours/'+parseInt((cur_group_num-1)/8+1)+'/1.png';
+        var img_elem = document.getElementById('img0');
+        img_elem.setAttribute('src', img_path);
+        img_elem.setAttribute('style', "border:5px solid white");
+        var img_elem = document.getElementById('img00');
+        img_elem.setAttribute('src', img_path);
+        img_elem.setAttribute('style', "border:5px solid white");
+
+
+        var text_elem = document.querySelector('p1');
+        text_elem.innerText = texts[(cur_group_num-1)%8];
+        text = document.getElementById("cur_grp");
+        text.innerHTML = cur_group_num;
+    }
+    random_setup();
+
+    // 更新函数
+    function next(loc){
+        if(flag == 1){
+            console.log(parseInt(loc))
+            if(loc<='5' && loc!='10'){
+                var real_loc = random_seq[parseInt(loc)-1];
+            }
+            else{
+                var real_loc = random_seq[parseInt(loc)-6]+5;
+            }
+            img_elem = document.getElementById('img'+loc);
+            clicked[real_loc] = (clicked[real_loc] + 1) % 2;
+            console.log(real_loc);
+            console.log(clicked[real_loc]);
+            if(real_loc<=4 && clicked[real_loc] == 1){
+                num_selected += 1;
+                img_elem.setAttribute('style', "border:5px solid red");
+            }
+            else if(real_loc>4 && clicked[real_loc] == 1){
+                num_selected += 7;
+                img_elem.setAttribute('style', "border:5px solid red");
+            }
+            else if(real_loc<=4){
+                num_selected -= 1;
+                img_elem.setAttribute('style', "border:5px solid white");
+            }
+            else{
+                num_selected -= 7;
+                img_elem.setAttribute('style', "border:5px solid white");
+            }
+            if(num_selected != 16){
+                return;
+            }else{
+
+                for(var i = 0; i < methods_num; i++){
+                    if(cur_group_num!=10 &&cur_group_num!=33 &&cur_group_num!=34 &&cur_group_num!=41 &&cur_group_num!=44 &&cur_group_num!=46 &&cur_group_num!=3 && cur_group_num!=4 && cur_group_num!=12 && cur_group_num!=17 && cur_group_num!=26 && cur_group_num!=36 && cur_group_num!=38 && cur_group_num!=42){
+                        aesthetics_score_record[i] += clicked[i];
+                    }
+                    clicked[i] = 0;
+                }
+                for(var i = 0; i < methods_num; i++){
+                    if(cur_group_num!=10 &&cur_group_num!=33 &&cur_group_num!=34 &&cur_group_num!=41 &&cur_group_num!=44 &&cur_group_num!=46 &&cur_group_num!=3 && cur_group_num!=4 && cur_group_num!=12 && cur_group_num!=17 && cur_group_num!=26 && cur_group_num!=36 && cur_group_num!=38 && cur_group_num!=42) {
+                        fidelity_score_record[i] += clicked[i + methods_num];
+                    }
+                    clicked[i+methods_num] = 0;
+                }
+
+                num_selected = 0;
+                ++cur_group_num;
+            }
+        }else{
+            fidelity_score_record[random_seq[parseInt(loc)-1]] += 1;
+            if(num_selected != 16){
+                return;
+            }else{
+                metric.innerHTML = str2;
+                flag = 1;
+                num_selected = 0;
+            }
+        }
+
+        // 查看已经进行了多少组
+        if(cur_group_num==group_num+1){
+            download();
+            for(var i=0;i<2*num_seq.length;++i){
+                var img_elem = document.getElementById('img'+(i+1).toString());
+                img_elem.setAttribute("style","display:none;");
+                var label_elem = document.getElementById('label'+(i+1).toString());
+                label_elem.setAttribute("style", "display:none;");
+            }
+            var img_elem = document.getElementById('img0');
+            img_elem.setAttribute("style","display:none;");
+            var label_elem = document.getElementById('label0');
+            label_elem.setAttribute("style", "display:none;");
+            var img_elem = document.getElementById('img00');
+            img_elem.setAttribute("style","display:none;");
+            var label_elem = document.getElementById('label00');
+            label_elem.setAttribute("style", "display:none;");
+            var text_elem = document.querySelector('p1');
+            text_elem.innerText = '';
+            document.getElementById('title').innerHTML = "评测完成，请将csv文件传给发布者。";
+            document.getElementById('title2').innerHTML = "";
+            document.getElementById('bottom').innerHTML = "感谢您的参与！";
+        }else{
+            random_setup();
+        }
+    }
+
+    function download(){
+        csv_text = "Method,Semantic_matching,Decoupling\n";
+        for(var i = 0; i < methods_num; ++i){
+            csv_text += methods[i] + ',';
+            csv_text += (fidelity_score_record[i] +
+                ','+ aesthetics_score_record[i]);
+            csv_text += '\n';
+        }
+        export_raw('Manipulate_result.csv', csv_text);
+    }
+
+    function fake_click(obj) {
+        var ev = document.createEvent("MouseEvents");
+        ev.initMouseEvent(
+            "click", true, false, window, 0, 0, 0, 0, 0
+            , false, false, false, false, 0, null
+        );
+        obj.dispatchEvent(ev);
+    }
+
+    function export_raw(name, data) {
+        var urlObject = window.URL || window.webkitURL || window;
+
+        var export_blob = new Blob([data]);
+
+        var save_link = document.createElementNS("http://www.w3.org/1999/xhtml", "a")
+        save_link.href = urlObject.createObjectURL(export_blob);
+        save_link.download = name;
+        fake_click(save_link);
+    }
+
+</script>

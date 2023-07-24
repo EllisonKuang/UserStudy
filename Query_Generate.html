@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <META HTTP-EQUIV="Cache-Control" CONTENT="no-cache, must-revalidate">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script src="./papaparse.min.js"></script>
+    <title>生成部分评测</title>
+    <style type="text/css">
+        body{
+            background-color: white;
+        }
+        .button {
+            width: 90px;
+            height: 40px;
+            border-radius: 2px;
+            border: 0px solid #ccc;
+            font-size: 20px;
+            color: white;
+            background-color: black;
+        }
+        .button_score {
+            width: 90px;
+            height: 40px;
+            border-radius: 2px;
+            border: 0px solid #ccc;
+            font-size: 20px;
+            color: white;
+            background-color: gray;
+        }
+        .button_score_select {
+            width: 90px;
+            height: 40px;
+            border-radius: 2px;
+            border: 0px solid #ccc;
+            font-size: 20px;
+            color: white;
+            background-color: red;
+        }
+        table {
+            font-size: 20px;
+        }
+    </style>
+</head>
+
+<body>
+<div align="Center" style="padding-bottom:30px; padding-top: 30px;">
+
+    <p style="color:red"> 手机端有BUG！请使用Chrome浏览器。请您在测试前先阅读Readme文件了解测试规则及‘语义匹配度’和‘图片真实度’指标的详细描述 </p>
+
+    <p1 style="font-size:20px"> 123 </p1>
+    <p id="title"> 请点击你认为下列图片中与上述对应文本<font size="5"><b id="metric">“语义匹配度”最优</b></font>的生成结果。 </p>
+    <br>
+    <table id="table2">
+        <tr>
+            <td style="text-align:center" id="label1"> 生成结果1 </td>
+            <td style="text-align:center" id="label2"> 生成结果2 </td>
+            <td style="text-align:center" id="label3"> 生成结果3 </td>
+            <td style="text-align:center" id="label4"> 生成结果4 </td>
+        </tr>
+        <tr>
+            <td> <img id="img1" height=300 onclick="next('1')" style="border:5px solid white"> </td>
+            <td> <img id="img2" height=300 onclick="next('2')" style="border:5px solid white"> </td>
+            <td> <img id="img3" height=300 onclick="next('3')" style="border:5px solid white"> </td>
+            <td> <img id="img4" height=300 onclick="next('4')" style="border:5px solid white"> </td>
+        </tr>
+        <tr height=10>
+        </tr>
+    </table>
+
+    <p id="title2"> 请点击你认为下列图片中与对应文本<font size="5"><b id="metric2">“图片真实度”最优</b></font>的生成结果。 </p>
+    <br>
+    <table id="table3">
+        <tr>
+            <td style="text-align:center" id="label5"> 生成结果1 </td>
+            <td style="text-align:center" id="label6"> 生成结果2 </td>
+            <td style="text-align:center" id="label7"> 生成结果3 </td>
+            <td style="text-align:center" id="label8"> 生成结果4 </td>
+        </tr>
+        <tr>
+            <td> <img id="img5" height=300 onclick="next('5')" style="border:5px solid white"> </td>
+            <td> <img id="img6" height=300 onclick="next('6')" style="border:5px solid white"> </td>
+            <td> <img id="img7" height=300 onclick="next('7')" style="border:5px solid white"> </td>
+            <td> <img id="img8" height=300 onclick="next('8')" style="border:5px solid white"> </td>
+        </tr>
+        <tr height=10>
+        </tr>
+    </table>
+    <br>
+    <p id="bottom">当前是 <a id=cur_grp> </a> / <a id=tol_grp> </a> 组</p>
+    <!-- <input type="button" value="下一个" class="button" onClick="next()"> -->
+    <br>
+</div>
+</body>
+</html>
+
+
+<script type="text/javascript">
+    // 可以调整的参数
+    var group_num = 81;
+    var methods_num = 4;
+
+    // 全局变量
+    var fidelity_score_record = new Array(methods_num);
+    var aesthetics_score_record = new Array(methods_num);
+    var clicked = new Array(2*methods_num);
+    for(var i = 0; i < methods_num; i++){
+        fidelity_score_record[i] = 0;
+        aesthetics_score_record[i] = 0;
+        clicked[i] = 0;
+        clicked[i+methods_num] = 0;
+    }
+
+    var cur_group_num = 1;
+    var flag = 1;
+    var num_selected = 0;
+
+    var methods = ['Ours','PCM-frame','StyleCLIP','TediGAN-B'];
+    var ids = ['1.png', '2.png', '3.png', '4.png', '5.png', '6.png', '7.png', '8.png', '9.png', '11.png', '12.png', '13.png', '14.png', '15.png', '16.png', '17.png', '18.png', '19.png', '20.png', '23.png', '24.png', '25.png', '26.png', '29.png', '30.png', '31.png', '32.png', '33.png', '34.png', '35.png', '36.png', '37.png', '39.png', '40.png', '41.png', '42.png', '43.png', '45.png', '46.png', '47.png', '48.png', '49.png', '50.png', '51.png', '52.png', '54.png', '55.png', '57.png', '58.png', '61.png', '62.png', '63.png', '64.png', '65.png', '67.png', '68.png', '69.png', '70.png', '71.png', '73.png', '74.png', '75.png', '79.png', '80.png', '81.png', '82.png', '83.png', '84.png', '85.png', '86.png', '87.png', '88.png', '89.png', '90.png', '91.png', '92.png', '93.png', '94.png', '95.png', '98.png', '99.png'];
+    var texts = ['She is a white woman. She is considered a beauty and a charming young woman with fine eyes. She is an intelligent young woman, with a lively, playful disposition, which delighted in anything ridiculous.', 'He is a white man. His tanned skin was drawn attractively tight on his face and his short hair looked as though it were trimmed every day.', 'He is lanky, big-boned, woolly-chested, with thick black eyebrows.', 'She is a white woman. Lily Bart is a red-haired young woman of great physical beauty. Men are as drawn to her beauty as women are threatened by it.', 'Santiago is an aging, experienced Cuban fisherman who has gone eighty-four days without catching a fish. He has thick beard.', 'She has green eyes, pale skin. She is famous for her fashionably small waist.', 'Thomas "Tom" Robinson is a black man who has three children with his wife, Helen.', 'Lucie has pretty figure, a quantity of golden hair and a pair of blue eyes.', 'A country girl educated in a convent and married to Charles Bovary at a young age, she harbors idealistic romantic illusions, covets sophistication, sensuality, and passion, and lapses into fits of extreme boredom and depression when her life fails to match the sentimental novels she treasures.', 'Beatrice, the niece of Leonato, who is governor of Messina, and Hero\' cousin in Shakespeare\' Much Ado About Nothing. Beatrice is a feisty, witty foil to her docile, gentle cousin and a perfect match for Benedick, who also shuns marriage.', 'Nancy is an around 16-18 years old girl. She is commonly described as having red-blond hair and blue eyes.', 'Nami is a Swedish girl. She is a slim young woman of average height with orange hair and brown eyes. Most people consider her to be very attractive or even beautiful.', 'He is a monk who is bald. He is young and always optimistic. He is a martial artist.', 'Hamlet is angry, dejected, depressed, and brooding; he is manic and energetic. He is dark and suicidal, a man who loathes himself and his fate.', 'Sethe is a black woman who is a saved negro slave. She is a proud and noble woman. She is a force to be reckoned with, as other forces will find.', 'Celie is a young black girl living in Georgia in the early years of the twentieth century. She is largely uneducated; her letters to God are written in non-standard dialect.', 'Cho was described to be an extremely pretty girl with long, shiny dark hair, a freckled nose, and being a head shorter than Harry Potter. She has big eyes.', 'This black woman is smiling. She has black hair.', 'This is a young man. He has golden hair and slightly opened mouth. He has oval face with beard. He has glass.', 'This man has brown hair. He wears eyeglasses. He is smiling.', 'She is black woman, and she has black hair.', 'She has black hair. She wears lipstick. She has bushy eyebrows.', 'This woman has straight hair and bangs.', 'This is an old man with beard.', 'He is a young man. He wears glasses. He is worrying about something.', 'Jack is a white man who has grey hair. He is sad now.', 'A man who is totally a bad person. He is always strict and mean to others. He has beard on his hideous face.', 'She is a beautiful woman with long straight hair. Her eyes are pretty.', 'This man has tanned skin. His short hair is black. He has a little beard.', 'She is an Asian girl with white skin and black hair. She looks sad.', 'This is an Indian man. He is young.', 'A Korean woman who has black hair and big eyes. She wears lipsticks.', 'She is an old woman with white hair, heavy makeup and lipsticks. She comes from Australia. She has wrinkles on her face.', 'Sterling Mulkern was a florid, beefy man, the kind who carried weight like a weapon, not a liability. He had a shock of stiff white hair you could land a DC-10 on and a handshake that stopped just short of inducing paralysis.', 'Bradley is a nancy boy who comes from Western Europe. He has brown short hair and smooth skin.', 'Ken is a gloomy man. He always worry about everything.', 'Emily comes from Eastern Europe. She is a teacher who wears glass.', 'Mary is a woman with yellow skin. She has long curly hair. She looks upset today.', 'Oliver is a white man who has beard. He wears a cap and glass.', 'Phoebe is a cute girl. She has soft hair and long eyelash.', 'Cassie looks happy. She has big eyes and wears earrings.', "Today is cold. It's snowing, so Marcy wears a cap to go outside.", "It's in the afternoon. Yellow light falls on Sam's face.", 'Mark is a gentleman. He has glass. He looks soft and warm. Everyone likes him.', 'She is a woman who comes from India.', 'He is an old man with thick beard and brown hair. He wears glass.', 'Wei is an middle aged Chinese woman with glass. She looks gloomy.', 'Vincent is an aged man. He has beard. His hair has been white. He wears glass.', 'Because of the bad weather, this white man is so depressed.', 'She feels unhappy because her toy is broken.', 'This woman wears earrings and glass. She is going to attend a wedding.', 'This is a woman with long eyelash. She wears lipsticks. She heavily makes up.', 'He feels a lot of pain.', 'He is a young man who has long bangs on his forehead.', 'This is a black woman. She has short hair and white teeth. She feels happy.', 'He is an old man who is bald. He has wrinkles on his face.', 'Stanley is a black man who wears glass. He has thick lips.', 'This is an Asian girl with big forehead. Her skin is white and her eyes are big. She comes from Middle East.', "This is a woman with glass. The light is dim, because it's cloudy.", 'Ella is an European girl. She has long black hair and bangs on her forehead.', 'This man has shaggy hair and beard. He wears glass.', 'The old man has white beard. He wears glass. He frowns.', 'Terry is a young man who is educated. He wears glass. He has black hair.', 'Lexie is a white woman with brown long hair. She wears glass.', 'She is black woman.', 'She has bangs and eyeglasses.', 'This is black man. He has hat.', 'This woman has wavy hair. She is young black woman.', 'She wears lipstick.', 'He has beard and bangs.', 'This man has beard. He has gray hair.', 'This woman wears heavy makeup.', 'He has high hairline.', 'This bald man has beard.', 'She has straight hair.', 'This man has sideburns and black hair.', 'He is receding(发际线后退的).', 'She has rosy cheeks.', 'This woman has bushy eyebrows. She wears lipstick. She has black hair. She wears earrings. This woman is attractive. She wears heavy makeup.', 'She has oval chubby face. She has gray straight hair.', 'This man has wavy hair.']
+    text = document.getElementById("tol_grp");
+    text.innerHTML = group_num;
+
+    Array.prototype.shuffle = function() {
+        var input = this;
+
+        for (var i = input.length-1; i >=0; i--) {
+            var randomIndex = Math.floor(Math.random()*(i+1));
+            var itemAtIndex = input[randomIndex];
+            input[randomIndex] = input[i];
+            input[i] = itemAtIndex;
+        }
+        return input;
+    }
+
+    var num_seq = [0,1,2,3];
+    var random_seq = [0,1,2,3];
+
+    // 加载函数
+    function random_setup(){
+        random_seq = num_seq.shuffle();
+        //random_seq = num_seq;
+        for(var i=0;i<random_seq.length;++i){
+            var img_path = 'Results/' + methods[random_seq[i]] + '_results/' + ids[cur_group_num-1];
+
+            var img_elem = document.getElementById('img'+(i+1).toString());
+            img_elem.setAttribute('src', img_path);
+            img_elem.setAttribute('style', "border:5px solid white");
+
+            var img_elem = document.getElementById('img'+(i+1+methods_num).toString());
+            img_elem.setAttribute('src', img_path);
+            img_elem.setAttribute('style', "border:5px solid white");
+        }
+        var text_elem = document.querySelector('p1');
+        text_elem.innerText = texts[cur_group_num-1];
+        text = document.getElementById("cur_grp");
+        text.innerHTML = cur_group_num;
+    }
+    random_setup();
+
+    // 更新函数
+    function next(loc){
+        if(flag == 1){
+            if(loc<='4'){
+                var real_loc = random_seq[parseInt(loc)-1];
+            }
+            else{
+                var real_loc = random_seq[parseInt(loc-4)-1]+4;
+            }
+            img_elem = document.getElementById('img'+loc);
+            clicked[real_loc] = (clicked[real_loc] + 1) % 2;
+            if(real_loc<=3 && clicked[real_loc] == 1){
+                num_selected += 1;
+                img_elem.setAttribute('style', "border:5px solid red");
+            }
+            else if(real_loc>3 && clicked[real_loc] == 1){
+                num_selected += 7;
+                img_elem.setAttribute('style', "border:5px solid red");
+            }
+            else if(real_loc<=3){
+                num_selected -= 1;
+                img_elem.setAttribute('style', "border:5px solid white");
+            }
+            else{
+                num_selected -= 7;
+                img_elem.setAttribute('style', "border:5px solid white");
+            }
+            if(num_selected != 8){
+                return;
+            }else{
+                for(var i = 0; i < methods_num; i++){
+                    aesthetics_score_record[i] += clicked[i];
+                    clicked[i] = 0;
+                }
+                for(var i = 0; i < methods_num; i++){
+                    fidelity_score_record[i] += clicked[i+methods_num];
+                    clicked[i+methods_num] = 0;
+                }
+                num_selected = 0;
+                ++cur_group_num;
+            }
+        }else{
+            fidelity_score_record[random_seq[parseInt(loc)-1]] += 1;
+            if(num_selected !=8){
+                return;
+            }else{
+                metric.innerHTML = str2;
+                flag = 1;
+                num_selected = 0;
+            }
+        }
+
+        // 查看已经进行了多少组
+        if(cur_group_num==group_num+1){
+            download();
+            for(var i=0;i<2*num_seq.length;++i){
+                var img_elem = document.getElementById('img'+(i+1).toString());
+                img_elem.setAttribute("style","display:none;");
+                var label_elem = document.getElementById('label'+(i+1).toString());
+                label_elem.setAttribute("style", "display:none;");
+            }
+            var text_elem = document.querySelector('p1');
+            text_elem.innerText = '';
+            document.getElementById('title').innerHTML = "评测完成，请将csv文件传给发布者。";
+
+            document.getElementById('title2').innerHTML = "";
+            document.getElementById('bottom').innerHTML = "感谢您的参与！";
+        }else{
+            random_setup();
+        }
+    }
+
+    function download(){
+        csv_text = "method,Picture_authenticity,Semantic_matching\n";
+        for(var i = 0; i < methods_num; ++i){
+            csv_text += methods[i] + ',';
+            csv_text += (fidelity_score_record[i] +
+                ','+ aesthetics_score_record[i]);
+            csv_text += '\n';
+        }
+        export_raw('Generate_result.csv', csv_text);
+    }
+
+    function fake_click(obj) {
+        var ev = document.createEvent("MouseEvents");
+        ev.initMouseEvent(
+            "click", true, false, window, 0, 0, 0, 0, 0
+            , false, false, false, false, 0, null
+        );
+        obj.dispatchEvent(ev);
+    }
+
+    function export_raw(name, data) {
+        var urlObject = window.URL || window.webkitURL || window;
+
+        var export_blob = new Blob([data]);
+
+        var save_link = document.createElementNS("http://www.w3.org/1999/xhtml", "a")
+        save_link.href = urlObject.createObjectURL(export_blob);
+        save_link.download = name;
+        fake_click(save_link);
+    }
+
+</script>
